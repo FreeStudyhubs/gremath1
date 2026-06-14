@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Math Quest — Season 1: The Fraction Forest</title>
+<style>
+/* ═══════════════════════════════════════════════════════════ */
+/* RESET & BASE                                                */
+/* ═══════════════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Open+Sans:wght@400;600;700&family=MedievalSharp&display=swap');
+
+:root{
+  --gold:#FFD700;--dark-gold:#B8860B;--deep-blue:#0a1628;
+  --forest-green:#1a472a;--forest-dark:#0d2818;
+  --potion-pink:#ff69b4;--potion-rose:#e75480;
+  --potion-blue:#4fc3f7;--potion-silver:#c0c0c0;
+  --potion-orange:#ff8c00;--potion-red:#ff4444;
+  --success:#4caf50;--error:#f44336;--warning:#ff9800;
+  --text-primary:#e8dcc8;--text-secondary:#a89880;
+  --card-bg:rgba(20,30,50,0.92);--overlay:rgba(0,0,0,0.7);
+  --glow-gold:0 0 20px rgba(255,215,0,0.4);
+  --glow-green:0 0 20px rgba(76,175,80,0.5);
+  --glow-pink:0 0 15px rgba(255,105,180,0.4);
+}
+
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  font-family:'Open Sans',sans-serif;color:var(--text-primary);
+  background:var(--deep-blue);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* GAME CONTAINER                                              */
+/* ═══════════════════════════════════════════════════════════ */
+#game{
+  width:100%;height:100%;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.screen{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.8s ease;
+  padding:20px;
+}
+.screen.active{opacity:1;pointer-events:all;}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* BACKGROUNDS                                                 */
+/* ═══════════════════════════════════════════════════════════ */
+.bg-title{
+  background:linear-gradient(180deg,#020810 0%,#0a1e3d 40%,#1a472a 100%);
+}
+.bg-forest{
+  background:linear-gradient(180deg,#061220 0%,#0d2818 50%,#1a3a20 100%);
+}
+.bg-cottage{
+  background:linear-gradient(135deg,#1a0e05 0%,#2d1a0a 40%,#1a2a15 100%);
+}
+.bg-cave{
+  background:linear-gradient(180deg,#0a0505 0%,#1a0808 50%,#2a1010 100%);
+}
+.bg-diagnostic{
+  background:linear-gradient(180deg,#0a0a20 0%,#151535 50%,#1a1a40 100%);
+}
+.bg-victory{
+  background:linear-gradient(180deg,#1a1005 0%,#2a1a08 50%,#1a2a15 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* PARTICLE SYSTEM (CSS only)                                  */
+/* ═══════════════════════════════════════════════════════════ */
+.particles{
+  position:absolute;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;overflow:hidden;
+}
+.particle{
+  position:absolute;border-radius:50%;
+  animation:float-up linear infinite;
+  opacity:0.6;
+}
+@keyframes float-up{
+  0%{transform:translateY(100vh) scale(0);opacity:0;}
+  10%{opacity:0.6;}
+  90%{opacity:0.3;}
+  100%{transform:translateY(-20px) scale(1);opacity:0;}
+}
+.sparkle{
+  position:absolute;width:4px;height:4px;background:var(--gold);
+  border-radius:50%;animation:sparkle-anim 1.5s ease-out forwards;
+}
+@keyframes sparkle-anim{
+  0%{transform:scale(0) translate(0,0);opacity:1;}
+  50%{opacity:0.8;}
+  100%{transform:scale(1) translate(var(--tx),var(--ty));opacity:0;}
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* TYPOGRAPHY                                                  */
+/* ═══════════════════════════════════════════════════════════ */
+.title-main{
+  font-family:'Cinzel',serif;font-size:clamp(2rem,6vw,4rem);
+  color:var(--gold);text-shadow:var(--glow-gold);
+  letter-spacing:4px;text-align:center;
+  animation:title-glow 3s ease-in-out infinite alternate;
+}
+@keyframes title-glow{
+  from{text-shadow:0 0 10px rgba(255,215,0,0.3);}
+  to{text-shadow:0 0 30px rgba(255,215,0,0.6),0 0 60px rgba(255,215,0,0.2);}
+}
+.title-sub{
+  font-family:'MedievalSharp',cursive;font-size:clamp(1rem,3vw,1.6rem);
+  color:var(--text-secondary);margin-top:10px;letter-spacing:2px;
+}
+.level-title{
+  font-family:'Cinzel',serif;font-size:clamp(1.2rem,4vw,2rem);
+  color:var(--gold);text-align:center;margin-bottom:5px;
+}
+.level-subtitle{
+  font-size:clamp(0.8rem,2vw,1rem);color:var(--text-secondary);
+  text-align:center;font-style:italic;margin-bottom:15px;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* DIALOGUE & CARDS                                            */
+/* ═══════════════════════════════════════════════════════════ */
+.dialogue-box{
+  background:var(--card-bg);border:1px solid rgba(255,215,0,0.3);
+  border-radius:12px;padding:clamp(15px,3vw,25px);max-width:700px;
+  width:90%;margin:10px auto;backdrop-filter:blur(10px);
+  box-shadow:0 4px 30px rgba(0,0,0,0.5);
+}
+.speaker-name{
+  font-family:'Cinzel',serif;color:var(--gold);font-size:0.9rem;
+  margin-bottom:8px;letter-spacing:1px;
+}
+.dialogue-text{
+  font-size:clamp(0.9rem,2.5vw,1.1rem);line-height:1.7;
+  color:var(--text-primary);
+}
+.dialogue-text .highlight{color:var(--gold);font-weight:700;}
+.dialogue-text .math{
+  color:#7ecfff;font-weight:700;font-size:1.15em;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* FRACTION VISUALIZER                                         */
+/* ═══════════════════════════════════════════════════════════ */
+.vial-container{
+  display:flex;gap:clamp(15px,4vw,40px);justify-content:center;
+  align-items:flex-end;margin:15px 0;flex-wrap:wrap;
+}
+.vial{
+  display:flex;flex-direction:column;align-items:center;
+}
+.vial-label{
+  font-size:0.75rem;color:var(--text-secondary);margin-bottom:5px;
+  text-align:center;max-width:100px;
+}
+.vial-body{
+  width:clamp(40px,10vw,60px);border:2px solid rgba(255,255,255,0.3);
+  border-radius:0 0 12px 12px;position:relative;overflow:hidden;
+  background:rgba(0,0,0,0.3);
+}
+.vial-section{
+  width:100%;height:clamp(18px,4vw,25px);border-top:1px solid rgba(255,255,255,0.15);
+  transition:background 0.5s ease;
+}
+.vial-section.filled{animation:fill-pulse 2s ease-in-out infinite alternate;}
+@keyframes fill-pulse{
+  from{filter:brightness(1);}to{filter:brightness(1.2);}
+}
+.vial-fraction{
+  font-family:'Cinzel',serif;font-size:clamp(1rem,3vw,1.4rem);
+  color:var(--gold);margin-top:8px;text-shadow:var(--glow-gold);
+}
+.vial-name{
+  font-size:0.65rem;color:var(--text-secondary);margin-top:3px;
+  text-align:center;max-width:80px;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* CAULDRON                                                    */
+/* ═══════════════════════════════════════════════════════════ */
+.cauldron{
+  width:clamp(100px,25vw,160px);height:clamp(80px,20vw,120px);
+  background:radial-gradient(ellipse at 50% 40%,#3a2510,#1a0e05);
+  border-radius:0 0 50% 50%;border:3px solid #5a3a1a;
+  position:relative;margin:15px auto;
+  box-shadow:0 5px 25px rgba(0,0,0,0.6),inset 0 -10px 20px rgba(0,0,0,0.4);
+}
+.cauldron::before{
+  content:'';position:absolute;top:-8px;left:-10px;right:-10px;
+  height:16px;background:#5a3a1a;border-radius:8px;
+}
+.cauldron-liquid{
+  position:absolute;bottom:5px;left:5px;right:5px;
+  border-radius:0 0 50% 50%;transition:height 1s ease,background 1s ease;
+  animation:bubble 3s ease-in-out infinite;
+}
+@keyframes bubble{
+  0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.02);}
+}
+.cauldron-steam{
+  position:absolute;top:-25px;left:50%;transform:translateX(-50%);
+  font-size:1.5rem;opacity:0.4;animation:steam 2s ease-in-out infinite;
+}
+@keyframes steam{
+  0%,100%{transform:translateX(-50%) translateY(0);opacity:0.2;}
+  50%{transform:translateX(-50%) translateY(-10px);opacity:0.5;}
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* QUESTION BOX                                                */
+/* ═══════════════════════════════════════════════════════════ */
+.question-box{
+  background:var(--card-bg);border:2px solid rgba(255,215,0,0.3);
+  border-radius:16px;padding:clamp(15px,3vw,25px);
+  max-width:600px;width:90%;margin:10px auto;
+  box-shadow:var(--glow-gold);
+}
+.question-text{
+  font-size:clamp(1rem,3vw,1.3rem);text-align:center;
+  margin-bottom:15px;color:var(--text-primary);line-height:1.5;
+}
+.question-math{
+  font-size:clamp(1.4rem,5vw,2.2rem);text-align:center;
+  color:var(--gold);font-family:'Cinzel',serif;
+  margin:15px 0;text-shadow:var(--glow-gold);
+}
+
+.answers-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  margin-top:15px;
+}
+.answer-btn{
+  background:rgba(30,50,80,0.8);border:2px solid rgba(100,150,200,0.3);
+  border-radius:10px;padding:clamp(10px,2vw,15px);
+  color:var(--text-primary);font-size:clamp(0.9rem,2.5vw,1.1rem);
+  cursor:pointer;transition:all 0.3s ease;text-align:center;
+  font-family:'Open Sans',sans-serif;
+}
+.answer-btn:hover{
+  background:rgba(40,70,120,0.9);border-color:var(--gold);
+  transform:translateY(-2px);box-shadow:var(--glow-gold);
+}
+.answer-btn.correct{
+  background:rgba(76,175,80,0.3)!important;
+  border-color:var(--success)!important;
+  box-shadow:var(--glow-green)!important;
+  animation:correct-pulse 0.5s ease;
+}
+.answer-btn.wrong{
+  background:rgba(244,67,54,0.2)!important;
+  border-color:var(--error)!important;
+  animation:wrong-shake 0.5s ease;
+}
+@keyframes correct-pulse{
+  0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}
+}
+@keyframes wrong-shake{
+  0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}
+  75%{transform:translateX(8px);}
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* BUTTONS                                                     */
+/* ═══════════════════════════════════════════════════════════ */
+.btn{
+  background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(184,134,11,0.3));
+  border:2px solid var(--gold);border-radius:10px;
+  padding:clamp(10px,2vw,14px) clamp(25px,5vw,40px);
+  color:var(--gold);font-family:'Cinzel',serif;
+  font-size:clamp(0.9rem,2.5vw,1.1rem);cursor:pointer;
+  transition:all 0.3s ease;letter-spacing:1px;
+  text-transform:uppercase;
+}
+.btn:hover{
+  background:linear-gradient(135deg,rgba(255,215,0,0.4),rgba(184,134,11,0.5));
+  transform:translateY(-2px);box-shadow:var(--glow-gold);
+}
+.btn-small{
+  padding:8px 20px;font-size:0.85rem;
+}
+.btn-success{border-color:var(--success);color:var(--success);}
+.btn-secondary{
+  border-color:var(--text-secondary);color:var(--text-secondary);
+  font-family:'Open Sans',sans-serif;text-transform:none;font-size:0.85rem;
+}
+.btn-group{
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:15px;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* HUD (Heads-Up Display)                                      */
+/* ═══════════════════════════════════════════════════════════ */
+#hud{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(10,22,40,0.95);border-bottom:1px solid rgba(255,215,0,0.2);
+  padding:8px 15px;display:none;
+  font-size:clamp(0.7rem,2vw,0.85rem);
+}
+#hud.visible{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;}
+.hud-item{display:flex;align-items:center;gap:5px;color:var(--text-secondary);}
+.hud-value{color:var(--gold);font-weight:700;}
+.hud-timer{color:var(--warning);font-family:monospace;font-size:1rem;}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* PROGRESS BAR                                                */
+/* ═══════════════════════════════════════════════════════════ */
+.progress-container{
+  width:90%;max-width:400px;height:12px;
+  background:rgba(255,255,255,0.1);border-radius:6px;
+  margin:10px auto;overflow:hidden;
+}
+.progress-fill{
+  height:100%;border-radius:6px;transition:width 1s ease;
+  background:linear-gradient(90deg,var(--dark-gold),var(--gold));
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* FEEDBACK OVERLAY                                            */
+/* ═══════════════════════════════════════════════════════════ */
+.feedback{
+  background:var(--card-bg);border-radius:16px;
+  padding:clamp(15px,3vw,25px);max-width:550px;width:90%;
+  margin:10px auto;border:2px solid;
+  animation:feedback-in 0.5s ease;
+}
+.feedback.correct-feedback{border-color:var(--success);}
+.feedback.wrong-feedback{border-color:var(--error);}
+@keyframes feedback-in{
+  from{transform:scale(0.9);opacity:0;}to{transform:scale(1);opacity:1;}
+}
+.feedback-icon{font-size:2.5rem;text-align:center;margin-bottom:10px;}
+.feedback-title{
+  font-family:'Cinzel',serif;font-size:1.2rem;text-align:center;
+  margin-bottom:10px;
+}
+.feedback-text{
+  font-size:0.95rem;line-height:1.7;color:var(--text-primary);
+}
+.feedback-math{
+  background:rgba(0,0,0,0.3);border-radius:8px;
+  padding:10px 15px;margin:10px 0;font-size:1.1rem;
+  text-align:center;color:#7ecfff;font-weight:700;
+}
+.xp-gain{
+  color:var(--gold);font-weight:700;font-size:1.1rem;
+  text-align:center;margin-top:10px;
+  animation:xp-pop 0.5s ease;
+}
+@keyframes xp-pop{
+  0%{transform:scale(0.5);opacity:0;}
+  70%{transform:scale(1.2);}
+  100%{transform:scale(1);opacity:1;}
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* CONCEPT CARD (HINT)                                         */
+/* ═══════════════════════════════════════════════════════════ */
+.concept-card{
+  background:rgba(15,25,50,0.95);border:2px solid rgba(126,207,255,0.4);
+  border-radius:16px;padding:20px;max-width:500px;width:90%;
+  margin:10px auto;
+  box-shadow:0 0 20px rgba(126,207,255,0.15);
+}
+.concept-card h3{
+  color:#7ecfff;font-family:'Cinzel',serif;font-size:1rem;
+  margin-bottom:12px;display:flex;align-items:center;gap:8px;
+}
+.concept-rule{
+  background:rgba(0,0,0,0.4);border-radius:8px;
+  padding:12px;margin:10px 0;text-align:center;
+  font-size:1.2rem;color:var(--gold);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* DRAGON / BOSS                                               */
+/* ═══════════════════════════════════════════════════════════ */
+.dragon-art{
+  font-size:clamp(4rem,15vw,8rem);text-align:center;
+  filter:drop-shadow(0 0 20px rgba(255,100,0,0.5));
+  animation:dragon-breathe 3s ease-in-out infinite;
+}
+@keyframes dragon-breathe{
+  0%,100%{transform:scale(1);}50%{transform:scale(1.05);}
+}
+.dragon-hp{
+  width:80%;max-width:400px;height:20px;
+  background:rgba(255,255,255,0.1);border-radius:10px;
+  margin:10px auto;overflow:hidden;border:1px solid rgba(255,100,0,0.4);
+}
+.dragon-hp-fill{
+  height:100%;border-radius:10px;transition:width 0.8s ease;
+  background:linear-gradient(90deg,#ff4444,#ff8c00);
+}
+.player-hp{
+  width:80%;max-width:400px;height:16px;
+  background:rgba(255,255,255,0.1);border-radius:8px;
+  margin:8px auto;overflow:hidden;border:1px solid rgba(76,175,80,0.4);
+}
+.player-hp-fill{
+  height:100%;border-radius:8px;transition:width 0.8s ease;
+  background:linear-gradient(90deg,var(--success),#81c784);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* DIAGNOSTIC                                                  */
+/* ═══════════════════════════════════════════════════════════ */
+.diagnostic-progress{
+  font-size:0.85rem;color:var(--text-secondary);text-align:center;
+  margin-bottom:10px;
+}
+.result-bar{
+  display:flex;align-items:center;gap:10px;margin:8px 0;
+}
+.result-label{width:130px;font-size:0.85rem;text-align:right;}
+.result-track{
+  flex:1;height:20px;background:rgba(255,255,255,0.1);
+  border-radius:10px;overflow:hidden;
+}
+.result-fill{
+  height:100%;border-radius:10px;transition:width 1.5s ease;
+}
+.result-value{width:45px;font-size:0.85rem;font-weight:700;}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* RESPONSIVE                                                  */
+/* ═══════════════════════════════════════════════════════════ */
+@media(max-width:500px){
+  .answers-grid{grid-template-columns:1fr;}
+  .vial-container{gap:15px;}
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* SCROLLABLE CONTENT                                          */
+/* ═══════════════════════════════════════════════════════════ */
+.scroll-content{
+  overflow-y:auto;max-height:calc(100vh - 60px);
+  width:100%;padding:10px 0 30px 0;
+  display:flex;flex-direction:column;align-items:center;
+}
+.screen.active .scroll-content{pointer-events:all;}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* MISC                                                        */
+/* ═══════════════════════════════════════════════════════════ */
+.emoji-icon{font-size:1.5rem;margin-right:5px;}
+.badge-display{
+  display:inline-block;background:rgba(255,215,0,0.15);
+  border:1px solid var(--gold);border-radius:20px;
+  padding:4px 14px;font-size:0.8rem;color:var(--gold);
+  margin:3px;
+}
+.fade-in{animation:fadeIn 0.8s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+.celebration{animation:celebrate 1s ease;}
+@keyframes celebrate{0%{transform:scale(0.8);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.text-center{text-align:center;}
+.mt-10{margin-top:10px;}.mt-20{margin-top:20px;}
+.mb-10{margin-bottom:10px;}.mb-20{margin-bottom:20px;}
+hr.pointed{border:none;border-top:1px solid rgba(255,215,0,0.15);margin:15px 0;width:80%;}
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-item">⭐ XP: <span class="hud-value" id="hud-xp">0</span></div>
+  <div class="hud-item">📍 <span id="hud-location">Fraction Forest</span></div>
+  <div class="hud-item" id="hud-timer-box" style="display:none">⏱️ <span class="hud-timer" id="hud-timer">90</span>s</div>
+  <div class="hud-item">🏷️ <span class="hud-value" id="hud-badges">0</span> badges</div>
+</div>
+
+<!-- GAME CONTAINER -->
+<div id="game"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- JAVASCRIPT ENGINE                                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+// ═══════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════
+const G = {
+  xp: 0,
+  badges: [],
+  level: 0,
+  currentScreen: null,
+  timerInterval: null,
+  timerValue: 0,
+  bossHP: 5,
+  playerHP: 3,
+  bossQ: 0,
+  diagnosticAnswers: [],
+  diagnosticQ: 0,
+  hintsUsed: 0,
+  correctStreak: 0,
+  totalCorrect: 0,
+  totalAttempted: 0,
+  levelsComplete: [false,false,false,false,false],
+  bossDefeated: false,
+  startTime: Date.now()
+};
+
+const $ = id => document.getElementById(id);
+const game = $('game');
+
+// ═══════════════════════════════════════════════════════════
+// AUDIO ENGINE (Simple Web Audio Tones)
+// ═══════════════════════════════════════════════════════════
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function initAudio(){if(!audioCtx)audioCtx=new AudioCtx();}
+
+function playTone(freq,duration=0.2,type='sine',vol=0.15){
+  try{
+    initAudio();
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.type=type;osc.frequency.value=freq;
+    gain.gain.setValueAtTime(vol,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+duration);
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    osc.start();osc.stop(audioCtx.currentTime+duration);
+  }catch(e){}
+}
+
+function sfx(name){
+  switch(name){
+    case'correct':playTone(523,0.1);setTimeout(()=>playTone(659,0.1),100);setTimeout(()=>playTone(784,0.2),200);break;
+    case'wrong':playTone(200,0.3,'square',0.1);break;
+    case'click':playTone(440,0.05);break;
+    case'reveal':playTone(330,0.15);setTimeout(()=>playTone(440,0.15),150);break;
+    case'boss':playTone(110,0.5,'sawtooth',0.1);setTimeout(()=>playTone(130,0.5,'sawtooth',0.1),300);break;
+    case'victory':playTone(523,0.15);setTimeout(()=>playTone(659,0.1),150);setTimeout(()=>playTone(784,0.1),250);setTimeout(()=>playTone(1047,0.3),350);break;
+    case'levelup':playTone(392,0.1);setTimeout(()=>playTone(523,0.1),120);setTimeout(()=>playTone(659,0.2),240);break;
+    case'chime':playTone(880,0.3,'sine',0.08);break;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCREEN ENGINE
+// ═══════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = $(id);
+  if(el){el.classList.add('active');G.currentScreen=id;}
+  updateHUD();
+}
+
+function updateHUD(){
+  $('hud-xp').textContent=G.xp;
+  $('hud-badges').textContent=G.badges.length;
+}
+
+function addXP(amount){
+  G.xp+=amount;
+  updateHUD();
+}
+
+function addBadge(name){
+  if(!G.badges.includes(name)){G.badges.push(name);updateHUD();}
+}
+
+function showHUD(show=true){
+  $('hud').classList.toggle('visible',show);
+}
+
+// Timer
+function startTimer(seconds,onTimeout){
+  G.timerValue=seconds;
+  $('hud-timer-box').style.display='flex';
+  $('hud-timer').textContent=seconds;
+  clearInterval(G.timerInterval);
+  G.timerInterval=setInterval(()=>{
+    G.timerValue--;
+    $('hud-timer').textContent=G.timerValue;
+    if(G.timerValue<=10)$('hud-timer').style.color='#f44336';
+    else if(G.timerValue<=30)$('hud-timer').style.color='#ff9800';
+    else $('hud-timer').style.color='#ff9800';
+    if(G.timerValue<=0){clearInterval(G.timerInterval);if(onTimeout)onTimeout();}
+  },1000);
+}
+function stopTimer(){
+  clearInterval(G.timerInterval);
+  $('hud-timer-box').style.display='none';
+}
+
+// Sparkle effect
+function createSparkles(container,count=30){
+  for(let i=0;i<count;i++){
+    const s=document.createElement('div');
+    s.className='sparkle';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.setProperty('--tx',(Math.random()-0.5)*200+'px');
+    s.style.setProperty('--ty',(Math.random()-0.5)*200+'px');
+    s.style.animationDelay=Math.random()*0.5+'s';
+    s.style.background=['#FFD700','#fff','#81c784','#7ecfff'][Math.floor(Math.random()*4)];
+    container.appendChild(s);
+    setTimeout(()=>s.remove(),2000);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// VIAL BUILDER
+// ═══════════════════════════════════════════════════════════
+function buildVial(numerator,denominator,color,label,name){
+  let html=`<div class="vial">`;
+  if(label)html+=`<div class="vial-label">${label}</div>`;
+  html+=`<div class="vial-body">`;
+  for(let i=denominator;i>=1;i--){
+    const filled=i<=numerator;
+    html+=`<div class="vial-section${filled?' filled':''}" style="${filled?'background:'+color:''}"></div>`;
+  }
+  html+=`</div><div class="vial-fraction">${numerator}/${denominator}</div>`;
+  if(name)html+=`<div class="vial-name">${name}</div>`;
+  html+=`</div>`;
+  return html;
+}
+
+function buildCauldron(fillPercent,color){
+  return `<div class="cauldron">
+    <div class="cauldron-steam">♨️</div>
+    <div class="cauldron-liquid" style="height:${fillPercent}%;background:${color}"></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUESTION ENGINE
+// ═══════════════════════════════════════════════════════════
+function buildQuestion(data){
+  // data: {question, math, answers:[], correct:index, hint, feedback_correct, feedback_wrong, xp, timer}
+  let html=`<div class="question-box fade-in">`;
+  html+=`<div class="question-text">${data.question}</div>`;
+  if(data.math) html+=`<div class="question-math">${data.math}</div>`;
+  html+=`<div class="answers-grid" id="answers-${data.id}">`;
+  data.answers.forEach((a,i)=>{
+    html+=`<button class="answer-btn" data-idx="${i}" onclick="handleAnswer('${data.id}',${i})">${a}</button>`;
+  });
+  html+=`</div>`;
+  if(data.hint){
+    html+=`<div class="btn-group mt-10">
+      <button class="btn-secondary btn-small" onclick="showHint('${data.id}')">💡 Hint</button>
+    </div>`;
+    html+=`<div id="hint-${data.id}" style="display:none" class="concept-card mt-10">
+      <h3>💡 Thorne's Wisdom</h3>
+      <div class="dialogue-text">${data.hint}</div>
+      <button class="btn-small btn-secondary mt-10" onclick="this.parentElement.style.display='none'">Dismiss</button>
+    </div>`;
+  }
+  html+=`</div>`;
+  html+=`<div id="feedback-${data.id}" style="display:none"></div>`;
+  return html;
+}
+
+// Store question data globally for answer handling
+const questionData={};
+
+function registerQuestion(data){
+  questionData[data.id]=data;
+}
+
+function showHint(id){
+  const h=$('hint-'+id);
+  if(h){h.style.display=h.style.display==='none'?'block':'none';G.hintsUsed++;}
+}
+
+function handleAnswer(qId,chosen){
+  const data=questionData[qId];
+  if(!data||data.answered)return;
+  data.answered=true;
+  
+  const btns=document.querySelectorAll(`#answers-${qId} .answer-btn`);
+  btns.forEach(b=>b.style.pointerEvents='none');
+  
+  G.totalAttempted++;
+  
+  const isCorrect = Array.isArray(data.correct)?data.correct.includes(chosen):chosen===data.correct;
+  
+  if(isCorrect){
+    sfx('correct');
+    btns[chosen].classList.add('correct');
+    G.totalCorrect++;
+    G.correctStreak++;
+    addXP(data.xp||15);
+    
+    const container=btns[chosen].closest('.screen')||document.body;
+    createSparkles(container);
+    
+    const fb=$('feedback-'+qId);
+    fb.style.display='block';
+    fb.innerHTML=`<div class="feedback correct-feedback fade-in">
+      <div class="feedback-icon">🎉</div>
+      <div class="feedback-title" style="color:var(--success)">Brilliant!</div>
+      <div class="feedback-text">${data.feedback_correct}</div>
+      ${data.xp?`<div class="xp-gain">+${data.xp} XP ⭐</div>`:''}
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');${data.onCorrect||''}">Continue →</button>
+      </div>
+    </div>`;
+  } else {
+    sfx('wrong');
+    btns[chosen].classList.add('wrong');
+    G.correctStreak=0;
+    
+    // Show correct answer
+    const correctIdx=Array.isArray(data.correct)?data.correct[0]:data.correct;
+    setTimeout(()=>btns[correctIdx].classList.add('correct'),500);
+    
+    const fb=$('feedback-'+qId);
+    fb.style.display='block';
+    fb.innerHTML=`<div class="feedback wrong-feedback fade-in">
+      <div class="feedback-icon">💭</div>
+      <div class="feedback-title" style="color:var(--warning)">Not quite...</div>
+      <div class="feedback-text">${data.feedback_wrong}</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');${data.onWrong||data.onCorrect||''}">Continue →</button>
+      </div>
+    </div>`;
+  }
+  stopTimer();
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUILD ALL SCREENS
+// ═══════════════════════════════════════════════════════════
+function buildGame(){
+  let html='';
+  
+  // ─────────────────────────────────────────────────────────
+  // MAIN MENU
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="menu" class="screen bg-title active">
+    <div class="particles" id="menu-particles"></div>
+    <div class="scroll-content">
+      <div style="margin-bottom:30px;">
+        <div class="title-main">⚗️ Math Quest</div>
+        <div class="title-sub">Season 1 — The Fraction Forest</div>
+      </div>
+      <div class="dialogue-box" style="max-width:500px;">
+        <p class="dialogue-text text-center">
+          Welcome back to mathematics, brave scholar.<br><br>
+          You haven't touched fractions in years?<br>
+          <span class="highlight">No shame. No judgment. Let's fix that.</span><br><br>
+          This game will teach you fractions through story, potions, and adventure.
+        </p>
+      </div>
+      <div class="btn-group mt-20">
+        <button class="btn" onclick="sfx('reveal');startPrologue()">🌲 Begin Adventure</button>
+        <button class="btn btn-secondary" onclick="sfx('click');startDiagnostic()">🩺 Take Diagnostic Test</button>
+      </div>
+      <div style="margin-top:20px;font-size:0.75rem;color:var(--text-secondary);text-align:center;">
+        For GRE & GMAT candidates returning to math
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // PROLOGUE
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="prologue" class="screen bg-forest">
+    <div class="particles" id="forest-particles"></div>
+    <div class="scroll-content">
+      <div class="level-title">🌲 The Fraction Forest</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">📖 NARRATOR</div>
+        <div class="dialogue-text">
+          Welcome, young scholar, to the Fraction Forest.<br><br>
+          For centuries, master alchemists have hidden here, brewing potions from 
+          <span class="highlight">fractional ingredients</span>. A pinch of this. A splash of that.<br><br>
+          Precision with fractions... is the difference between 
+          <span class="highlight">magic and catastrophe</span>.<br><br>
+          You've been away from mathematics for many years. No shame in that. Life happens.<br><br>
+          But your test awaits. And this forest will teach you fractions the way they were meant to be learned: 
+          through <span class="highlight">story</span>, through <span class="highlight">hands-on crafting</span>, 
+          through <em>understanding</em>—not memorization.
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('reveal');showScreen('thorne-intro')">Enter the Cottage →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // THORNE INTRO
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="thorne-intro" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div style="font-size:4rem;text-align:center;margin-bottom:10px;">👵🏻</div>
+      <div class="level-title">Master Alchemist Thorne</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          I'm Thorne. I've been waiting for you.<br><br>
+          Thirty years ago, I forgot EVERYTHING about math while raising my daughter. 
+          But I taught myself again, just like <span class="highlight">you</span> are doing now.<br><br>
+          That's why I'm patient. I know the struggle is real.<br><br>
+          My motto: <em>"Math isn't about being smart. It's about being willing to understand."</em><br><br>
+          Now then... shall we begin? Or are you still afraid of fractions?
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showHUD(true);startLevel1()">Let's begin! ⚗️</button>
+        <button class="btn btn-secondary" onclick="sfx('click');showNervous()">I'm nervous...</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // NERVOUS RESPONSE
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="nervous" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div style="font-size:3rem;text-align:center;">💛</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          That's honest. And honesty is good.<br><br>
+          Many before you felt the same way. They forgot math. Life happened. 
+          Jobs, families, years passed.<br><br>
+          But here in the forest, <span class="highlight">you will remember</span>.<br><br>
+          I'll go slow. I'll explain everything. And if you get something wrong? 
+          That's not failure—<span class="highlight">that's learning</span>.<br><br>
+          Ready to try?
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showHUD(true);startLevel1()">Yes, let's try ✨</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-1: MIXING VIALS
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-1-intro" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-1: The Mixing Vials</div>
+      <div class="level-subtitle">Your First Lesson in Adding Fractions</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          Alright, apprentice. Your first task.<br><br>
+          We're brewing a <span class="highlight">Love Potion for the Forest Sprites</span>—yes, they get lonely too.<br><br>
+          I need two ingredients. Let me show you...
+        </div>
+      </div>
+      <div class="vial-container">
+        ${buildVial(2,5,'var(--potion-pink)','Ingredient 1','Cherry Blossom')}
+        <div style="font-size:2rem;color:var(--gold);align-self:center;">+</div>
+        ${buildVial(3,5,'var(--potion-rose)','Ingredient 2','First Love Petals')}
+      </div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          This pink one is <span class="math">⅖ cup</span> of Cherry Blossom Essence—that's 
+          <span class="highlight">2 parts out of 5</span>.<br><br>
+          This rosy one is <span class="math">⅗ cup</span> of First Love Petals—<span class="highlight">3 parts out of 5</span>.<br><br>
+          Notice: both are measured in <span class="highlight">fifths</span>. Same size parts. Different amounts.<br><br>
+          Now I'm pouring BOTH into the cauldron. What do we get?
+        </div>
+      </div>
+      ${buildCauldron(85,'linear-gradient(to top, var(--potion-pink), var(--potion-rose))')}
+      <div class="btn-group">
+        <button class="btn" onclick="sfx('click');showScreen('L1-1-q1')">Solve It! →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // L1-1 Question 1
+  const q1data = {
+    id:'L1-1-q1', question:'If I have 2 parts and 3 parts, and each part is the same size (fifths)... how many parts total?',
+    math:'²⁄₅ + ³⁄₅ = ?', 
+    answers:['A) ¹⁄₅','B) ⁵⁄₅ (= 1)','C) ⁸⁄₅','D) ⁵⁄₁₀'],
+    correct:1, xp:15, timer:90,
+    hint:`Look at the cauldron. Count the filled sections:<br><br>
+      Pink sections: <strong>2</strong><br>Rose sections: <strong>3</strong><br>
+      Total: <strong>2 + 3 = ?</strong><br><br>
+      <div class="concept-rule">Rule: Add the TOP numbers. Keep the BOTTOM the same.<br>a/b + c/b = (a+c)/b</div>`,
+    feedback_correct:`Exactly! When you add fractions with the <strong>same denominator</strong>, 
+      you just add the numerators (top numbers) and keep the denominator (bottom number) the same.
+      <div class="feedback-math">²⁄₅ + ³⁄₅ = (2+3)/5 = ⁵⁄₅ = 1 whole potion!</div>
+      The cauldron is full! One complete Love Potion! 💖`,
+    feedback_wrong:`Let me show you step by step:<br><br>
+      We have <strong>2 pink sections</strong> and <strong>3 rose sections</strong>.<br>
+      That's 2 + 3 = <strong>5 sections</strong> total.<br>
+      Each section is a <strong>fifth</strong>, so: 5 fifths = ⁵⁄₅ = 1 whole.<br><br>
+      <div class="feedback-math">Rule: Same denominator? Just add the tops!<br>²⁄₅ + ³⁄₅ = ⁵⁄₅ = 1</div>
+      The denominator stays at 5 because the <em>size</em> of each part didn't change.`,
+    onCorrect:"showScreen('L1-1-q2')",
+    onWrong:"showScreen('L1-1-q2')"
+  };
+  registerQuestion(q1data);
+
+  html+=`
+  <div id="L1-1-q1" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-1 — Challenge 1</div>
+      ${buildQuestion(q1data)}
+    </div>
+  </div>`;
+
+  // L1-1 Question 2
+  const q2data = {
+    id:'L1-1-q2', question:'New mixture! Moonlight Water + Starlight Dust. Same idea, different numbers.',
+    math:'³⁄₄ + ¹⁄₄ = ?',
+    answers:['A) ⁴⁄₄ (= 1)','B) ³⁄₂','C) ¹⁄₂','D) ⁴⁄₈'],
+    correct:0, xp:12, timer:60,
+    hint:`Same rule as before!<br>Add the tops: 3 + 1 = ?<br>Keep the bottom: 4<br><br>
+      <div class="concept-rule">a/b + c/b = (a+c)/b</div>`,
+    feedback_correct:`Perfect! ³⁄₄ + ¹⁄₄ = ⁴⁄₄ = 1. Another full potion! 🌙✨
+      <div class="feedback-math">3 + 1 = 4, keep the 4 → ⁴⁄₄ = 1</div>`,
+    feedback_wrong:`The rule is: add tops, keep bottoms.<br>
+      <div class="feedback-math">³⁄₄ + ¹⁄₄ = (3+1)/4 = ⁴⁄₄ = 1</div>
+      We don't add or multiply the denominators when they're already the same!`,
+    onCorrect:"showScreen('L1-1-q3')", onWrong:"showScreen('L1-1-q3')"
+  };
+  registerQuestion(q2data);
+
+  html+=`
+  <div id="L1-1-q2" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-1 — Challenge 2</div>
+      <div class="vial-container">
+        ${buildVial(3,4,'var(--potion-blue)','','Moonlight Water')}
+        <div style="font-size:2rem;color:var(--gold);align-self:center;">+</div>
+        ${buildVial(1,4,'var(--potion-silver)','','Starlight Dust')}
+      </div>
+      ${buildQuestion(q2data)}
+    </div>
+  </div>`;
+
+  // L1-1 Question 3
+  const q3data = {
+    id:'L1-1-q3', question:'Getting harder! Bigger numbers now.',
+    math:'⁵⁄₈ + ²⁄₈ = ?',
+    answers:['A) ⁷⁄₈','B) ⁷⁄₁₆','C) ¹⁄₈','D) ¹⁰⁄₈'],
+    correct:0, xp:15, timer:90,
+    hint:`Don't multiply the denominators! They're the same!<br>
+      <div class="concept-rule">5 + 2 = 7<br>Keep the 8<br>Answer: ⁷⁄₈</div>`,
+    feedback_correct:`Excellent! ⁵⁄₈ + ²⁄₈ = ⁷⁄₈. 
+      <div class="feedback-math">Notice: ⁷⁄₈ is LESS than 1 (because 7 < 8). That's important for later!</div>`,
+    feedback_wrong:`Common trap! Let's see:<br>
+      <div class="feedback-math">⁵⁄₈ + ²⁄₈ = (5+2)/8 = ⁷⁄₈</div>
+      If you picked ⁷⁄₁₆, you multiplied the denominators. Don't! Same denominator = keep it.`,
+    onCorrect:"showScreen('L1-1-q4')", onWrong:"showScreen('L1-1-q4')"
+  };
+  registerQuestion(q3data);
+
+  html+=`
+  <div id="L1-1-q3" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-1 — Challenge 3</div>
+      ${buildQuestion(q3data)}
+    </div>
+  </div>`;
+
+  // L1-1 Question 4 (GRE-Style)
+  const q4data = {
+    id:'L1-1-q4', 
+    question:'🎯 EXAM-STYLE: Grandmother\'s recipe for Courage Brew needs both ingredients mixed together.',
+    math:'⁵⁄₁₂ + ⁷⁄₁₂ = ?',
+    answers:['A) ¹⁄₁₂','B) ¹²⁄₁₂ (= 1)','C) ²⁄₃','D) ²⁴⁄₁₂'],
+    correct:1, xp:25, timer:120,
+    hint:`Same exact rule. Even with 12 as denominator!<br>
+      5 + 7 = ?<br>Keep the 12.<br>Then simplify.
+      <div class="concept-rule">⁵⁄₁₂ + ⁷⁄₁₂ = (5+7)/12 = ?/12</div>`,
+    feedback_correct:`PERFECT! You've created exactly one full pot of Courage Brew! 🏆
+      <div class="feedback-math">⁵⁄₁₂ + ⁷⁄₁₂ = ¹²⁄₁₂ = 1</div>
+      The recipe is balanced! Grandmother would be proud.`,
+    feedback_wrong:`Let's trace it carefully:<br>
+      <div class="feedback-math">5 + 7 = 12<br>Keep denominator 12<br>¹²⁄₁₂ = 1</div>
+      If you chose ²⁄₃ — that's actually a different value! ¹²⁄₁₂ = 1, not ²⁄₃ (≈ 0.667).`,
+    onCorrect:"completeLevel('L1-1')", onWrong:"completeLevel('L1-1')"
+  };
+  registerQuestion(q4data);
+
+  html+=`
+  <div id="L1-1-q4" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-1 — Final Challenge</div>
+      <div class="dialogue-box mb-10">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">This is my grandmother's recipe for <span class="highlight">Courage Brew</span>. 
+        It's famous in the forest. The recipe needs both ingredients mixed together.</div>
+      </div>
+      ${buildQuestion(q4data)}
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-1 COMPLETE
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-1-complete" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:3rem;text-align:center;">🏆</div>
+        <div class="level-title">Level 1-1 Complete!</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="feedback-title" style="color:var(--success)">Fractions Added — Mastered! ✓</div>
+        <div class="dialogue-text text-center">
+          <strong>What you learned:</strong><br>
+          ✓ Adding fractions with same denominator<br>
+          ✓ Numerators count the parts<br>
+          ✓ Denominators stay the same (same-size parts)<br><br>
+          <div class="concept-rule">a/b + c/b = (a+c)/b</div>
+        </div>
+        <div class="badge-display">🏷️ Fraction Mixer</div>
+      </div>
+      <div class="progress-container mt-10">
+        <div class="progress-fill" style="width:20%"></div>
+      </div>
+      <div class="text-center" style="font-size:0.8rem;color:var(--text-secondary)">Season 1: 20% Complete (1/5 levels)</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');startLevel2()">Continue to Level 1-2 →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-2: BOTTLE SPLITTER (Division)
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-2-intro" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-2: Bottle Splitter</div>
+      <div class="level-subtitle">Dividing Fractions — The "Flip & Multiply" Trick</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          Three young apprentices are arriving. Each needs a dose of 
+          <span class="highlight">Essence of Dragon's Breath</span>.<br><br>
+          I have <span class="math">⁴⁄₅ cup</span> total. 
+          I need to divide it equally among <span class="highlight">3 apprentices</span>.<br><br>
+          This is called <span class="highlight">division of fractions</span>. 
+          And I'll be honest—it's where most people get confused.<br><br>
+          But here's the secret trick...
+        </div>
+      </div>
+      <div class="concept-card">
+        <h3>🔑 The Secret: Flip & Multiply!</h3>
+        <div class="dialogue-text">
+          Dividing by a number is the <strong>same</strong> as multiplying by its <strong>reciprocal</strong> (flip).<br><br>
+          <div class="concept-rule">
+            ⁴⁄₅ ÷ 3<br>= ⁴⁄₅ × ¹⁄₃<br>= ⁴⁄₁₅
+          </div>
+          <strong>Step 1:</strong> Flip the 3 → becomes ¹⁄₃<br>
+          <strong>Step 2:</strong> Multiply tops: 4 × 1 = 4<br>
+          <strong>Step 3:</strong> Multiply bottoms: 5 × 3 = 15<br>
+          <strong>Result:</strong> Each apprentice gets ⁴⁄₁₅ cup!
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showScreen('L1-2-q1')">Try It Yourself →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // L1-2 Q1
+  const L12q1 = {
+    id:'L1-2-q1', question:'A potion requires dividing ²⁄₃ cup equally among 4 people. How much does each get?',
+    math:'²⁄₃ ÷ 4 = ?',
+    answers:['A) ²⁄₁₂ (= ¹⁄₆)','B) ⁸⁄₃','C) ²⁄₇','D) ⁶⁄₄'],
+    correct:0, xp:20, timer:90,
+    hint:`Flip & Multiply!<br>
+      <div class="concept-rule">²⁄₃ ÷ 4 = ²⁄₃ × ¹⁄₄<br>= (2×1)/(3×4) = ²⁄₁₂ = ¹⁄₆</div>`,
+    feedback_correct:`Excellent! You flipped 4 to ¹⁄₄ and multiplied!
+      <div class="feedback-math">²⁄₃ × ¹⁄₄ = ²⁄₁₂ = ¹⁄₆</div>
+      Each person gets ¹⁄₆ cup. Smaller than the original — makes sense when dividing!`,
+    feedback_wrong:`Remember: Flip & Multiply!
+      <div class="feedback-math">²⁄₃ ÷ 4 = ²⁄₃ × ¹⁄₄ = ²⁄₁₂ = ¹⁄₆</div>
+      Step 1: Flip 4 → ¹⁄₄<br>Step 2: Multiply tops: 2×1=2<br>Step 3: Multiply bottoms: 3×4=12`,
+    onCorrect:"showScreen('L1-2-q2')", onWrong:"showScreen('L1-2-q2')"
+  };
+  registerQuestion(L12q1);
+
+  html+=`
+  <div id="L1-2-q1" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-2 — Challenge 1</div>
+      ${buildQuestion(L12q1)}
+    </div>
+  </div>`;
+
+  // L1-2 Q2 (Harder — fraction ÷ fraction)
+  const L12q2 = {
+    id:'L1-2-q2', question:'🎯 EXAM-STYLE: A bottle has ²⁄₃ liters of Healing Tincture. Each dose is ¹⁄₆ liter. How many people can be healed?',
+    math:'²⁄₃ ÷ ¹⁄₆ = ?',
+    answers:['A) ¹⁄₉','B) 2','C) 4','D) ¹⁄₄'],
+    correct:2, xp:30, timer:120,
+    hint:`Flip the second fraction!<br>
+      <div class="concept-rule">²⁄₃ ÷ ¹⁄₆ = ²⁄₃ × ⁶⁄₁<br>= (2×6)/(3×1) = ¹²⁄₃ = ?</div>
+      Now simplify ¹²⁄₃...`,
+    feedback_correct:`🎉 Four people cured! You're mastering division!
+      <div class="feedback-math">²⁄₃ × ⁶⁄₁ = ¹²⁄₃ = 4</div>
+      Intuition check: ²⁄₃ is BIGGER than ¹⁄₆, so the answer should be MORE than 1. ✓`,
+    feedback_wrong:`<div class="feedback-math">²⁄₃ ÷ ¹⁄₆ = ²⁄₃ × ⁶⁄₁ = ¹²⁄₃ = 4</div>
+      Step 1: Flip ¹⁄₆ → ⁶⁄₁ (which is just 6)<br>
+      Step 2: Multiply: ²⁄₃ × 6 = 12/3 = 4<br><br>
+      Makes sense: ²⁄₃ is much bigger than ¹⁄₆, so many doses fit inside!`,
+    onCorrect:"completeLevel('L1-2')", onWrong:"completeLevel('L1-2')"
+  };
+  registerQuestion(L12q2);
+
+  html+=`
+  <div id="L1-2-q2" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-2 — Final Challenge</div>
+      ${buildQuestion(L12q2)}
+    </div>
+  </div>`;
+
+  // L1-2 Complete
+  html+=`
+  <div id="L1-2-complete" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:3rem;text-align:center;">⚗️</div>
+        <div class="level-title">Level 1-2 Complete!</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="feedback-title" style="color:var(--success)">Division Mastered! ✓</div>
+        <div class="dialogue-text text-center">
+          <strong>The Golden Rule:</strong><br>
+          <div class="concept-rule">Division = Flip & Multiply!<br>a/b ÷ c/d = a/b × d/c</div>
+          ✓ Flip the divisor (second fraction)<br>
+          ✓ Multiply straight across<br>
+          ✓ Simplify if possible
+        </div>
+        <div class="badge-display">🏷️ Bottle Splitter</div>
+      </div>
+      <div class="progress-container mt-10"><div class="progress-fill" style="width:40%"></div></div>
+      <div class="text-center" style="font-size:0.8rem;color:var(--text-secondary)">Season 1: 40% (2/5)</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');startLevel3()">Continue to Level 1-3 →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-3: BOW-TIE DUEL (Comparing)
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-3-intro" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-3: The Bow-Tie Duel ⚔️</div>
+      <div class="level-subtitle">Comparing Fractions Without Finding Common Denominators</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔴 MAGE CRIMSON</div>
+        <div class="dialogue-text">"My Fire Elixir is <span class="math">³⁄₄</span> potency!"</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔵 MAGE SAPPHIRE</div>
+        <div class="dialogue-text">"My Ice Draught is <span class="math">⁴⁄₅</span> potency!"</div>
+      </div>
+      <div class="concept-card">
+        <h3>⚔️ The Bow-Tie Method</h3>
+        <div class="dialogue-text">
+          To compare <span class="math">a/b</span> vs <span class="math">c/d</span>: <strong>cross-multiply!</strong><br><br>
+          <div class="concept-rule">
+            ³⁄₄ vs ⁴⁄₅<br><br>
+            Left cross: 3 × 5 = 15<br>
+            Right cross: 4 × 4 = 16<br><br>
+            16 > 15, so ⁴⁄₅ > ³⁄₄<br>
+            Sapphire wins! 🔵
+          </div>
+          The <strong>bigger cross-product</strong> belongs to the <strong>bigger fraction</strong>.
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showScreen('L1-3-q1')">Settle the Duel →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // L1-3 Q1
+  const L13q1 = {
+    id:'L1-3-q1', question:'Which is larger? Use the Bow-Tie method!',
+    math:'²⁄₅ vs ³⁄₇',
+    answers:['A) ²⁄₅ is larger','B) ³⁄₇ is larger','C) They\'re equal'],
+    correct:1, xp:15, timer:60,
+    hint:`Cross-multiply:<br>2 × 7 = 14<br>3 × 5 = 15<br>Which is bigger: 14 or 15?`,
+    feedback_correct:`Right! 15 > 14, so ³⁄₇ wins!
+      <div class="feedback-math">2×7=14 vs 3×5=15 → 15>14 → ³⁄₇ > ²⁄₅</div>`,
+    feedback_wrong:`<div class="feedback-math">2×7=14 vs 3×5=15<br>15 > 14, so ³⁄₇ is larger</div>
+      The cross-product on the right (15) is bigger, so the right fraction wins.`,
+    onCorrect:"showScreen('L1-3-q2')", onWrong:"showScreen('L1-3-q2')"
+  };
+  registerQuestion(L13q1);
+
+  html+=`
+  <div id="L1-3-q1" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-3 — Duel 1</div>
+      ${buildQuestion(L13q1)}
+    </div>
+  </div>`;
+
+  // L1-3 Q2 (Final)
+  const L13q2 = {
+    id:'L1-3-q2', question:'🎯 The Legendary Duel! A dragon guards ⁷⁄₉ of treasure. A sphinx guards ⁵⁄₇. Who has MORE?',
+    math:'⁷⁄₉ vs ⁵⁄₇',
+    answers:['A) Dragon (⁷⁄₉)','B) Sphinx (⁵⁄₇)','C) Equal'],
+    correct:0, xp:25, timer:90,
+    hint:`Bow-Tie:<br>7 × 7 = 49<br>5 × 9 = 45<br>Which is bigger?`,
+    feedback_correct:`🐉 The DRAGON has more treasure! 49 > 45!
+      <div class="feedback-math">7×7=49 vs 5×9=45 → 49>45 → ⁷⁄₉ > ⁵⁄₇</div>`,
+    feedback_wrong:`<div class="feedback-math">7×7=49 vs 5×9=45<br>49 > 45 → Dragon (⁷⁄₉) wins!</div>`,
+    onCorrect:"completeLevel('L1-3')", onWrong:"completeLevel('L1-3')"
+  };
+  registerQuestion(L13q2);
+
+  html+=`
+  <div id="L1-3-q2" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-3 — Final Duel</div>
+      ${buildQuestion(L13q2)}
+    </div>
+  </div>`;
+
+  // L1-3 Complete
+  html+=`
+  <div id="L1-3-complete" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:3rem;text-align:center;">⚔️</div>
+        <div class="level-title">Level 1-3 Complete!</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="concept-rule">Bow-Tie: a/b vs c/d → Compare ad vs bc<br>Bigger cross-product = bigger fraction</div>
+        <div class="badge-display">🏷️ Bow-Tie Duelist</div>
+      </div>
+      <div class="progress-container mt-10"><div class="progress-fill" style="width:60%"></div></div>
+      <div class="text-center" style="font-size:0.8rem;color:var(--text-secondary)">Season 1: 60% (3/5)</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');startLevel4()">Continue to Level 1-4 →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-4: MIRROR MAGE (Reciprocals)
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-4-intro" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-4: Mirror Mage 🪞</div>
+      <div class="level-subtitle">Reciprocals — Flipping Fractions</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          You've wandered into the <span class="highlight">Mirror Dimension</span>!<br><br>
+          Here, everything is <strong>inverted. Flipped. Reversed.</strong><br><br>
+          To escape, you must find the <span class="highlight">reciprocal</span> of each fraction — 
+          its mirror image.<br><br>
+          <div class="concept-rule">Reciprocal of a/b = b/a<br>Reciprocal of n = 1/n<br><br>
+          Why? Because: a/b × b/a = 1 (always!)</div>
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showScreen('L1-4-q1')">Enter the Mirrors →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // L1-4 Q1
+  const L14q1 = {
+    id:'L1-4-q1', question:'🪞 Mirror Room 1: Find the reciprocal to escape!',
+    math:'Reciprocal of ³⁄₄ = ?',
+    answers:['A) ⁴⁄₃','B) ³⁄₃','C) ³⁄₄','D) ¹⁄₄'],
+    correct:0, xp:10, timer:45,
+    hint:`Flip it upside down! The top becomes the bottom, the bottom becomes the top.`,
+    feedback_correct:`Portal glows green! ✨ ³⁄₄ flipped = ⁴⁄₃. You escape Room 1!`,
+    feedback_wrong:`Just flip it! Top → Bottom, Bottom → Top.
+      <div class="feedback-math">³⁄₄ → ⁴⁄₃</div>`,
+    onCorrect:"showScreen('L1-4-q2')", onWrong:"showScreen('L1-4-q2')"
+  };
+  registerQuestion(L14q1);
+
+  html+=`
+  <div id="L1-4-q1" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-4 — Mirror Room 1</div>
+      ${buildQuestion(L14q1)}
+    </div>
+  </div>`;
+
+  // L1-4 Q2 (Tricky: whole number)
+  const L14q2 = {
+    id:'L1-4-q2', question:'🪞 Mirror Room 2: This one\'s tricky! What\'s the reciprocal of a WHOLE NUMBER?',
+    math:'Reciprocal of 5 = ?',
+    answers:['A) ¹⁄₅','B) ⁵⁄₁','C) ⁵⁄₅','D) -5'],
+    correct:0, xp:20, timer:60,
+    hint:`Remember: 5 is the same as ⁵⁄₁<br>Flip ⁵⁄₁ → ¹⁄₅`,
+    feedback_correct:`🎉 BRILLIANT! 5 = ⁵⁄₁, flipped = ¹⁄₅
+      <div class="feedback-math">Whole numbers ARE fractions: 5 = ⁵⁄₁<br>Reciprocal of n = ¹⁄n</div>
+      You escape the Mirror Dimension! 🪞✨`,
+    feedback_wrong:`<div class="feedback-math">5 = ⁵⁄₁ → flip → ¹⁄₅</div>
+      Common trick! Whole numbers are secretly fractions (with 1 as denominator).`,
+    onCorrect:"completeLevel('L1-4')", onWrong:"completeLevel('L1-4')"
+  };
+  registerQuestion(L14q2);
+
+  html+=`
+  <div id="L1-4-q2" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-4 — Mirror Room 2</div>
+      ${buildQuestion(L14q2)}
+    </div>
+  </div>`;
+
+  // L1-4 Complete
+  html+=`
+  <div id="L1-4-complete" class="screen bg-forest">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:3rem;text-align:center;">🪞</div>
+        <div class="level-title">Level 1-4 Complete!</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="concept-rule">Reciprocal = Flip!<br>a/b → b/a<br>n → 1/n<br>Always: n × (1/n) = 1</div>
+        <div class="badge-display">🏷️ Mirror Mage</div>
+      </div>
+      <div class="progress-container mt-10"><div class="progress-fill" style="width:80%"></div></div>
+      <div class="text-center" style="font-size:0.8rem;color:var(--text-secondary)">Season 1: 80% (4/5)</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');startLevel5()">Continue to Level 1-5 →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // LEVEL 1-5: ROYAL TAX COLLECTOR (Percent Conversion)
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="L1-5-intro" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-5: Royal Tax Collector 👑</div>
+      <div class="level-subtitle">Converting Fractions to Percentages</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">👑 DUCHESS PERCENTAGE</div>
+        <div class="dialogue-text">
+          Welcome to the Royal Treasury!<br><br>
+          Villagers think in <span class="highlight">fractions</span> ("We'll pay ¹⁄₅ of our harvest").<br>
+          But the kingdom records everything in <span class="highlight">percentages</span>.<br><br>
+          Can you translate between them?<br><br>
+          <div class="concept-rule">Fraction → Percent:<br>
+          Step 1: Divide top by bottom<br>
+          Step 2: Multiply by 100<br>
+          Step 3: Add % sign<br><br>
+          Example: ¹⁄₅ = 1÷5 = 0.2 × 100 = 20%</div>
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');showScreen('L1-5-q1')">Start Collecting →</button>
+      </div>
+    </div>
+  </div>`;
+
+  // L1-5 Q1
+  const L15q1 = {
+    id:'L1-5-q1', question:'A merchant offers ¼ of their corn harvest as tax. What percentage is that?',
+    math:'¹⁄₄ = ? %',
+    answers:['A) 25%','B) 40%','C) 4%','D) 0.25%'],
+    correct:0, xp:15, timer:60,
+    hint:`Step 1: 1 ÷ 4 = 0.25<br>Step 2: 0.25 × 100 = ?`,
+    feedback_correct:`Correct! ¼ = 25%. A fair contribution! 👑
+      <div class="feedback-math">1 ÷ 4 = 0.25 → × 100 = 25%</div>`,
+    feedback_wrong:`<div class="feedback-math">1 ÷ 4 = 0.25<br>0.25 × 100 = 25%</div>`,
+    onCorrect:"showScreen('L1-5-q2')", onWrong:"showScreen('L1-5-q2')"
+  };
+  registerQuestion(L15q1);
+
+  html+=`
+  <div id="L1-5-q1" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-5 — Tax Assessment 1</div>
+      ${buildQuestion(L15q1)}
+    </div>
+  </div>`;
+
+  // L1-5 Q2 (Harder)
+  const L15q2 = {
+    id:'L1-5-q2', question:'🎯 EXAM-STYLE: A Far Forest merchant offers ³⁄₈ of their mystical crystals.',
+    math:'³⁄₈ = ? %',
+    answers:['A) 37.5%','B) 38%','C) 3.8%','D) 375%'],
+    correct:0, xp:25, timer:90,
+    hint:`Step 1: 3 ÷ 8 = 0.375<br>Step 2: 0.375 × 100 = ?`,
+    feedback_correct:`MAGNIFICENT! ³⁄₈ = 37.5%. This kingdom is fortunate to have you! 👑
+      <div class="feedback-math">3 ÷ 8 = 0.375 → × 100 = 37.5%</div>`,
+    feedback_wrong:`<div class="feedback-math">3 ÷ 8 = 0.375<br>0.375 × 100 = 37.5%</div>
+      Trap: 38% looks close but isn't exact. Precision matters on the GRE!`,
+    onCorrect:"completeLevel('L1-5')", onWrong:"completeLevel('L1-5')"
+  };
+  registerQuestion(L15q2);
+
+  html+=`
+  <div id="L1-5-q2" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="level-title">Level 1-5 — Final Tax Assessment</div>
+      ${buildQuestion(L15q2)}
+    </div>
+  </div>`;
+
+  // L1-5 Complete
+  html+=`
+  <div id="L1-5-complete" class="screen bg-cottage">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:3rem;text-align:center;">👑</div>
+        <div class="level-title">Level 1-5 Complete!</div>
+      </div>
+      <div class="dialogue-box">
+        <div class="concept-rule">Fraction → %: Divide, then × 100<br>% → Fraction: Put over 100, simplify</div>
+        <div class="badge-display">🏷️ Royal Tax Collector</div>
+      </div>
+      <div class="progress-container mt-10"><div class="progress-fill" style="width:100%"></div></div>
+      <div class="text-center" style="font-size:0.8rem;color:var(--text-secondary)">All 5 levels complete! Boss battle awaits...</div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('boss');startBoss()">⚔️ Face the Dragon!</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // BOSS BATTLE: DENOMINATOR DRAGON
+  // ─────────────────────────────────────────────────────────
+  html+=`
+  <div id="boss-intro" class="screen bg-cave">
+    <div class="scroll-content">
+      <div class="dragon-art">🐉</div>
+      <div class="level-title" style="color:#ff6600;">THE DENOMINATOR DRAGON</div>
+      <div class="dialogue-box" style="border-color:rgba(255,100,0,0.4);">
+        <div class="speaker-name" style="color:#ff6600;">🐉 DRAGON</div>
+        <div class="dialogue-text">
+          WHO DARES ENTER MY REALM?<br><br>
+          I am the <span class="highlight" style="color:#ff6600">Denominator Dragon</span>, 
+          guardian of fractional knowledge.<br><br>
+          Few mortals reach this point. <strong>FEWER still survive.</strong><br><br>
+          Solve my <span class="highlight">5 riddles</span>. Answer correctly, and you may pass.<br><br>
+          Answer wrong... and you lose a life. <span style="color:var(--error)">You have 3 lives.</span>
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" style="border-color:#ff6600;color:#ff6600" onclick="sfx('boss');startBossQ(0)">Accept the Challenge ⚔️</button>
+      </div>
+    </div>
+  </div>`;
+
+  // Boss questions
+  const bossQuestions = [
+    {id:'boss-q0',question:'Riddle 1: Addition',math:'³⁄₇ + ²⁄₇ = ?',
+     answers:['A) ⁵⁄₇','B) ⁵⁄₁₄','C) ⁶⁄₇','D) ¹⁄₇'],correct:0,xp:15,
+     feedback_correct:'The dragon nods. "You know your denominators..."',
+     feedback_wrong:'The dragon smirks. "Basic addition. ³⁄₇ + ²⁄₇ = ⁵⁄₇. The denominator stays!"'},
+    {id:'boss-q1',question:'Riddle 2: Division',math:'³⁄₄ ÷ ³⁄₈ = ?',
+     answers:['A) ¹⁄₂','B) 2','C) ⁹⁄₃₂','D) ⁸⁄₃'],correct:1,xp:20,
+     feedback_correct:'The dragon recoils! "Flip and multiply... you know the way."',
+     feedback_wrong:'³⁄₄ × ⁸⁄₃ = ²⁴⁄₁₂ = 2. Flip the second fraction!'},
+    {id:'boss-q2',question:'Riddle 3: Comparison',math:'Which is larger: ⁵⁄₈ or ⁷⁄₁₁?',
+     answers:['A) ⁵⁄₈','B) ⁷⁄₁₁','C) Equal'],correct:0,xp:20,
+     feedback_correct:'5×11=55 vs 7×8=56... Wait, 55 < 56. Actually ⁷⁄₁₁ is larger! But the dragon accepts your confidence...',
+     feedback_wrong:'Bow-Tie: 5×11=55 vs 7×8=56. 56>55, so ⁷⁄₁₁ is actually larger!'},
+    {id:'boss-q3',question:'Riddle 4: Reciprocal Application',math:'What is the reciprocal of ²⁄₇?',
+     answers:['A) ⁷⁄₂','B) ²⁄₇','C) -²⁄₇','D) ¹⁄₂'],correct:0,xp:15,
+     feedback_correct:'The dragon\'s eyes widen. "You understand the mirror!"',
+     feedback_wrong:'Flip it! ²⁄₇ → ⁷⁄₂. The reciprocal swaps top and bottom.'},
+    {id:'boss-q4',question:'Riddle 5 (FINAL): A recipe needs ³⁄₄ cup flour. You make ²⁄₃ of the recipe. How much flour?',
+     math:'³⁄₄ × ²⁄₃ = ?',
+     answers:['A) ⁶⁄₁₂ (= ¹⁄₂)','B) ⁵⁄₇','C) ⁶⁄₇','D) ⁹⁄₈'],correct:0,xp:30,
+     feedback_correct:'The dragon ROARS in defeat! "You... have mastered fractions!"',
+     feedback_wrong:'³⁄₄ × ²⁄₃ = (3×2)/(4×3) = ⁶⁄₁₂ = ¹⁄₂. Multiply straight across!'}
+  ];
+
+  // Fix boss Q3 (comparison) - let's correct it
+  bossQuestions[2] = {id:'boss-q2',question:'Riddle 3: Comparison — Which is larger?',math:'⁵⁄₆ vs ⁴⁄₅',
+    answers:['A) ⁵⁄₆','B) ⁴⁄₅','C) Equal'],correct:0,xp:20,
+    feedback_correct:'5×5=25 vs 4×6=24. 25>24, so ⁵⁄₆ wins! The dragon staggers!',
+    feedback_wrong:'Bow-Tie: 5×5=25 vs 4×6=24. 25>24, so ⁵⁄₆ is larger!'};
+
+  bossQuestions.forEach((q,i)=>{
+    q.timer=60;
+    q.onCorrect=`bossResult(${i},true)`;
+    q.onWrong=`bossResult(${i},false)`;
+    registerQuestion(q);
+    
+    html+=`
+    <div id="boss-q${i}" class="screen bg-cave">
+      <div class="scroll-content">
+        <div class="dragon-art" style="font-size:3rem;">🐉</div>
+        <div style="text-align:center;color:#ff6600;font-size:0.9rem;margin-bottom:5px;">
+          Riddle ${i+1} of 5
+        </div>
+        <div class="dragon-hp mb-10">
+          <div class="dragon-hp-fill" id="dragon-hp-${i}" style="width:${100-i*20}%"></div>
+        </div>
+        <div style="text-align:center;font-size:0.75rem;color:var(--text-secondary);">Dragon HP</div>
+        <div class="player-hp mt-10 mb-10">
+          <div class="player-hp-fill" id="player-hp-${i}" style="width:100%"></div>
+        </div>
+        <div style="text-align:center;font-size:0.75rem;color:var(--text-secondary);">Your Lives</div>
+        ${buildQuestion(q)}
+      </div>
+    </div>`;
+  });
+
+  // Boss Victory
+  html+=`
+  <div id="boss-victory" class="screen bg-victory">
+    <div class="scroll-content">
+      <div class="celebration">
+        <div style="font-size:5rem;text-align:center;">🏆</div>
+        <div class="title-main" style="font-size:clamp(1.5rem,5vw,2.5rem);">SEASON 1 CHAMPION!</div>
+      </div>
+      <div class="dialogue-box mt-20">
+        <div class="speaker-name">🐉 DRAGON</div>
+        <div class="dialogue-text">
+          <em>"Go now, young scholar. You have mastered fractions. You understand their essence.
+          The next seasons will test you further—algebra, exponents, geometry.
+          But this foundation? <span class="highlight">Unshakable.</span>"</em>
+        </div>
+      </div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          I KNEW IT! Apprentice, you've done it!<br><br>
+          <strong>Skills Mastered:</strong><br>
+          ✅ Adding Fractions<br>
+          ✅ Dividing Fractions (Flip & Multiply)<br>
+          ✅ Comparing Fractions (Bow-Tie)<br>
+          ✅ Reciprocals<br>
+          ✅ Fraction ↔ Percent Conversion<br><br>
+          <span id="final-stats"></span>
+        </div>
+        <div id="badges-display" style="margin-top:10px;"></div>
+      </div>
+      <div class="btn-group mt-20">
+        <button class="btn" onclick="sfx('click');startDiagnostic()">🩺 Take Full Diagnostic</button>
+        <button class="btn btn-secondary" onclick="sfx('click');showScreen('menu')">🏠 Return to Menu</button>
+      </div>
+    </div>
+  </div>`;
+
+  // Boss Defeat
+  html+=`
+  <div id="boss-defeat" class="screen bg-cave">
+    <div class="scroll-content">
+      <div style="font-size:4rem;text-align:center;">💔</div>
+      <div class="level-title">The Dragon Prevails... For Now</div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🐉 DRAGON</div>
+        <div class="dialogue-text">
+          "You showed courage, mortal. But you need more practice.<br><br>
+          Return to the forest. Review your lessons. <span class="highlight">Then face me again.</span>"
+        </div>
+      </div>
+      <div class="dialogue-box">
+        <div class="speaker-name">🔮 THORNE</div>
+        <div class="dialogue-text">
+          Don't worry, apprentice. Failure is just learning in disguise.<br>
+          Let's review what tripped you up, then try again.
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');G.playerHP=3;G.bossHP=5;G.bossQ=0;startBoss()">⚔️ Try Again</button>
+        <button class="btn btn-secondary" onclick="sfx('click');showScreen('menu')">Review Levels First</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ─────────────────────────────────────────────────────────
+  // DIAGNOSTIC TEST
+  // ─────────────────────────────────────────────────────────
+  const diagQuestions = [
+    // SECTION A: Fractions (Q1-Q7)
+    {id:'dq0',section:'Fractions',question:'Calculate:',math:'¹⁄₄ + ³⁄₄ = ?',
+     answers:['A) ⁴⁄₄ (=1)','B) ⁴⁄₈','C) ¹⁄₈','D) ³⁄₁₆'],correct:0,
+     topic:'S1-L1',skill:'Adding fractions (same denom)'},
+    {id:'dq1',section:'Fractions',question:'Calculate:',math:'²⁄₃ × ³⁄₅ = ?',
+     answers:['A) ⁶⁄₁₅ (=²⁄₅)','B) ⁵⁄₈','C) ⁶⁄₈','D) ¹⁄₅'],correct:0,
+     topic:'S1-L2',skill:'Multiplying fractions'},
+    {id:'dq2',section:'Fractions',question:'Calculate:',math:'¹⁄₃ ÷ ¹⁄₆ = ?',
+     answers:['A) ¹⁄₂','B) 2','C) ¹⁄₁₈','D) 6'],correct:1,
+     topic:'S1-L2',skill:'Dividing fractions'},
+    {id:'dq3',section:'Fractions',question:'Which is larger?',math:'³⁄₅ vs ⁵⁄₈',
+     answers:['A) ³⁄₅','B) ⁵⁄₈','C) Equal','D) Cannot tell'],correct:1,
+     topic:'S1-L3',skill:'Comparing fractions'},
+    {id:'dq4',section:'Fractions',question:'Convert to percentage:',math:'³⁄₈ = ?%',
+     answers:['A) 37.5%','B) 38%','C) 30%','D) 3.75%'],correct:0,
+     topic:'S1-L5',skill:'Fraction to percent'},
+
+    // SECTION B: Algebra (Q5-Q9)
+    {id:'dq5',section:'Algebra',question:'Solve for x:',math:'3x − 7 = 20',
+     answers:['A) x = 9','B) x = 27/3','C) x = 13/3','D) x = −9'],correct:0,
+     topic:'S2-L1',skill:'Linear equations'},
+    {id:'dq6',section:'Algebra',question:'Factor:',math:'x² − 5x + 6 = 0',
+     answers:['A) (x−2)(x−3)=0','B) (x+2)(x+3)=0','C) (x−1)(x−6)=0','D) (x+6)(x−1)=0'],correct:0,
+     topic:'S2-L2',skill:'Quadratic factoring'},
+    {id:'dq7',section:'Algebra',question:'Expand using FOIL:',math:'(x+3)(x−4) = ?',
+     answers:['A) x²−x−12','B) x²+x−12','C) x²−7x+12','D) x²−12'],correct:0,
+     topic:'S2-L3',skill:'FOIL expansion'},
+    {id:'dq8',section:'Algebra',question:'Translate to equation: "Seven less than three times a number equals twenty-two."',math:'',
+     answers:['A) 7−3x=22','B) 3x−7=22','C) 3(7−x)=22','D) 22−3x=7'],correct:1,
+     topic:'S6-L1',skill:'Word translation'},
+    {id:'dq9',section:'Algebra',question:'What is |−7| ?',math:'',
+     answers:['A) −7','B) 7','C) 0','D) ±7'],correct:1,
+     topic:'S5-L1',skill:'Absolute value'},
+
+    // SECTION C: Number Properties (Q10-Q14)
+    {id:'dq10',section:'Numbers',question:'If n is odd, which MUST be even?',math:'',
+     answers:['A) n+2','B) 2n','C) n+n+n','D) n²'],correct:1,
+     topic:'S3-L1',skill:'Even/odd rules'},
+    {id:'dq11',section:'Numbers',question:'Which is divisible by BOTH 3 and 4?',math:'',
+     answers:['A) 48','B) 50','C) 54','D) 58'],correct:0,
+     topic:'S3-L3',skill:'Divisibility rules'},
+    {id:'dq12',section:'Numbers',question:'How many positive factors does 36 have?',math:'36 = 2² × 3²',
+     answers:['A) 4','B) 6','C) 9','D) 12'],correct:2,
+     topic:'S3-L4',skill:'Factor counting'},
+    {id:'dq13',section:'Numbers',question:'What is the units digit of 7⁴?',math:'',
+     answers:['A) 7','B) 9','C) 3','D) 1'],correct:3,
+     topic:'S3-L6',skill:'Units digit patterns'},
+    {id:'dq14',section:'Numbers',question:'Which is prime?',math:'',
+     answers:['A) 51','B) 67','C) 91','D) 87'],correct:1,
+     topic:'S3-L2',skill:'Prime identification'},
+
+    // SECTION D: Exponents & Roots (Q15-Q17)
+    {id:'dq15',section:'Exponents',question:'Simplify:',math:'2⁻³ = ?',
+     answers:['A) −8','B) −6','C) ¹⁄₈','D) 8'],correct:2,
+     topic:'S4-L5',skill:'Negative exponents'},
+    {id:'dq16',section:'Exponents',question:'Simplify:',math:'x³ · x⁵ = ?',
+     answers:['A) x¹⁵','B) x⁸','C) 2x⁸','D) x²'],correct:1,
+     topic:'S4-L1',skill:'Multiplying like bases'},
+    {id:'dq17',section:'Exponents',question:'Simplify:',math:'√50 = ?',
+     answers:['A) 5√2','B) 25√2','C) 10√5','D) 2√25'],correct:0,
+     topic:'S4-L3',skill:'Simplifying radicals'},
+
+    // SECTION E: Geometry (Q18-Q20)
+    {id:'dq18',section:'Geometry',question:'Rectangle: perimeter 20cm, width 4cm. Area = ?',math:'',
+     answers:['A) 16 cm²','B) 24 cm²','C) 32 cm²','D) 80 cm²'],correct:1,
+     topic:'S10-L4',skill:'Area formulas'},
+    {id:'dq19',section:'Geometry',question:'45-45-90 triangle, leg = 5. Hypotenuse = ?',math:'',
+     answers:['A) 5','B) 5√2','C) 10','D) 5√3'],correct:1,
+     topic:'S10-L3',skill:'Special triangles'},
+    {id:'dq20',section:'Geometry',question:'Points (2,3) and (5,9). Slope = ?',math:'',
+     answers:['A) 2','B) 3','C) ³⁄₇','D) ⁷⁄₃'],correct:0,
+     topic:'S10-L7',skill:'Coordinate slope'},
+
+    // SECTION F: Advanced (Q21-Q24)
+    {id:'dq21',section:'Advanced',question:'Train A: 60mph. Train B starts 2hrs later at 80mph. When does B catch A?',math:'',
+     answers:['A) 4 hours','B) 6 hours','C) 8 hours','D) 3 hours'],correct:1,
+     topic:'S6-L4',skill:'Rate problems'},
+    {id:'dq22',section:'Advanced',question:'Bag: 3 red, 4 blue, 5 green. P(picking blue) = ?',math:'',
+     answers:['A) ⁴⁄₁₂ (=¹⁄₃)','B) ⁴⁄₈','C) ³⁄₁₂','D) ⁴⁄₁₁'],correct:0,
+     topic:'S9-L5',skill:'Basic probability'},
+    {id:'dq23',section:'Advanced',question:'Set: {2,5,5,7,9,11}. Median = ?',math:'',
+     answers:['A) 5','B) 6','C) 6.5','D) 7'],correct:1,
+     topic:'S8-L2',skill:'Median calculation'},
+    {id:'dq24',section:'Advanced',question:'Simple Interest: $1000 at 5% for 3 years = ?',math:'I = P × r × t',
+     answers:['A) $150','B) $50','C) $1150','D) $15'],correct:0,
+     topic:'S6-L3',skill:'Interest formulas'}
+  ];
+
+  // Diagnostic intro
+  html+=`
+  <div id="diagnostic-intro" class="screen bg-diagnostic">
+    <div class="scroll-content">
+      <div style="font-size:3rem;text-align:center;">🩺</div>
+      <div class="title-main" style="font-size:clamp(1.3rem,4vw,2rem);">Math Amnesia Diagnostic</div>
+      <div class="dialogue-box mt-20" style="border-color:rgba(126,207,255,0.3);">
+        <div class="dialogue-text">
+          This is <strong>NOT</strong> a test of intelligence. It's a <span class="highlight">map</span> of where you are right now.<br><br>
+          <strong>25 questions</strong> covering every major GRE/GMAT quant topic:<br>
+          • Fractions & Arithmetic<br>
+          • Algebra & Equations<br>
+          • Number Properties<br>
+          • Exponents & Roots<br>
+          • Geometry<br>
+          • Statistics & Probability<br><br>
+          <span class="highlight">Be honest.</span> If you truly don't know, just guess—we'll identify the gap anyway.<br><br>
+          ⏱️ Untimed. Take your time.<br>
+          📊 At the end, receive your personalized learning roadmap.
+        </div>
+      </div>
+      <div class="btn-group mt-10">
+        <button class="btn" onclick="sfx('click');G.diagnosticAnswers=[];G.diagnosticQ=0;showDiagQ(0)">Begin Diagnostic →</button>
+        <button class="btn btn-secondary" onclick="sfx('click');showScreen('menu')">← Back to Menu</button>
+      </div>
+    </div>
+  </div>`;
+
+  // Diagnostic question screens
+  diagQuestions.forEach((q,i)=>{
+    q.xp = 0;
+    q.timer = 0;
+    q.onCorrect = `diagNext(${i},true)`;
+    q.onWrong = `diagNext(${i},false)`;
+    q.hint = null;
+    q.feedback_correct = `✓ Correct! (${q.skill})`;
+    q.feedback_wrong = `The answer was: ${q.answers[q.correct]}. (${q.skill})`;
+    registerQuestion(q);
+
+    html+=`
+    <div id="diag-q${i}" class="screen bg-diagnostic">
+      <div class="scroll-content">
+        <div class="diagnostic-progress">
+          Question ${i+1} of 25 · Section: ${q.section}
+        </div>
+        <div class="progress-container mb-10">
+          <div class="progress-fill" style="width:${(i/25)*100}%;background:linear-gradient(90deg,#7ecfff,#4fc3f7)"></div>
+        </div>
+        ${buildQuestion(q)}
+      </div>
+    </div>`;
+  });
+
+  // Diagnostic Results
+  html+=`
+  <div id="diagnostic-results" class="screen bg-diagnostic">
+    <div class="scroll-content">
+      <div style="font-size:3rem;text-align:center;">📊</div>
+      <div class="title-main" style="font-size:clamp(1.2rem,4vw,1.8rem);">Your Math Amnesia Profile</div>
+      <div class="dialogue-box mt-10" style="max-width:600px;border-color:rgba(126,207,255,0.3);">
+        <div id="diag-results-content"></div>
+      </div>
+      <div class="btn-group mt-20">
+        <button class="btn" onclick="sfx('click');showScreen('menu')">🏠 Return to Menu</button>
+        <button class="btn btn-secondary" onclick="sfx('click');startPrologue()">🌲 Start Adventure</button>
+      </div>
+    </div>
+  </div>`;
+
+  // SET ALL HTML
+  game.innerHTML = html;
+
+  // Generate particles for menu
+  generateParticles('menu-particles',15);
+  generateParticles('forest-particles',10);
+}
+
+function generateParticles(containerId,count){
+  const c = $(containerId);
+  if(!c)return;
+  for(let i=0;i<count;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*100+'%';
+    p.style.width=p.style.height=(Math.random()*4+2)+'px';
+    p.style.background=['var(--gold)','var(--potion-blue)','var(--potion-pink)','#fff'][Math.floor(Math.random()*4)];
+    p.style.animationDuration=(Math.random()*10+8)+'s';
+    p.style.animationDelay=(Math.random()*10)+'s';
+    c.appendChild(p);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+function startPrologue(){showScreen('prologue');}
+function showNervous(){showScreen('nervous');}
+
+function startLevel1(){
+  $('hud-location').textContent='Level 1-1: Mixing Vials';
+  showScreen('L1-1-intro');
+}
+function startLevel2(){
+  $('hud-location').textContent='Level 1-2: Bottle Splitter';
+  addBadge('Fraction Mixer');sfx('levelup');
+  showScreen('L1-2-intro');
+}
+function startLevel3(){
+  $('hud-location').textContent='Level 1-3: Bow-Tie Duel';
+  addBadge('Bottle Splitter');sfx('levelup');
+  showScreen('L1-3-intro');
+}
+function startLevel4(){
+  $('hud-location').textContent='Level 1-4: Mirror Mage';
+  addBadge('Bow-Tie Duelist');sfx('levelup');
+  showScreen('L1-4-intro');
+}
+function startLevel5(){
+  $('hud-location').textContent='Level 1-5: Tax Collector';
+  addBadge('Mirror Mage');sfx('levelup');
+  showScreen('L1-5-intro');
+}
+
+function completeLevel(level){
+  const idx={'L1-1':0,'L1-2':1,'L1-3':2,'L1-4':3,'L1-5':4}[level];
+  G.levelsComplete[idx]=true;
+  sfx('levelup');
+  showScreen(level+'-complete');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOSS BATTLE LOGIC
+// ═══════════════════════════════════════════════════════════
+function startBoss(){
+  addBadge('Royal Tax Collector');
+  $('hud-location').textContent='⚔️ BOSS BATTLE';
+  showScreen('boss-intro');
+}
+
+function startBossQ(index){
+  G.bossQ=index;
+  // Reset question answered state
+  const qd=questionData['boss-q'+index];
+  if(qd)qd.answered=false;
+  showScreen('boss-q'+index);
+  startTimer(60,()=>bossResult(index,false));
+  // Update HP bars
+  for(let i=0;i<5;i++){
+    const dhp=$('dragon-hp-'+i);
+    const php=$('player-hp-'+i);
+    if(dhp)dhp.style.width=Math.max(0,(G.bossHP/5)*100)+'%';
+    if(php)php.style.width=Math.max(0,(G.playerHP/3)*100)+'%';
+  }
+}
+
+function bossResult(index,correct){
+  stopTimer();
+  if(correct){
+    G.bossHP--;
+  } else {
+    G.playerHP--;
+  }
+  
+  if(G.playerHP<=0){
+    setTimeout(()=>{sfx('wrong');showScreen('boss-defeat');},1500);
+    return;
+  }
+  
+  if(index>=4 || G.bossHP<=0){
+    // Boss defeated
+    setTimeout(()=>{
+      sfx('victory');
+      G.bossDefeated=true;
+      addBadge('Dragon Slayer');
+      addBadge('Season 1 Champion');
+      
+      // Build final stats
+      const elapsed=Math.round((Date.now()-G.startTime)/60000);
+      $('final-stats').innerHTML=`
+        <strong>Your Journey Stats:</strong><br>
+        ⭐ Total XP: ${G.xp}<br>
+        🏷️ Badges: ${G.badges.length}<br>
+        🎯 Accuracy: ${G.totalAttempted?Math.round(G.totalCorrect/G.totalAttempted*100):0}%<br>
+        ⏱️ Time: ${elapsed} minutes<br>
+        💡 Hints Used: ${G.hintsUsed}
+      `;
+      $('badges-display').innerHTML=G.badges.map(b=>`<span class="badge-display">🏷️ ${b}</span>`).join('');
+      showScreen('boss-victory');
+    },1500);
+    return;
+  }
+  
+  // Next question after delay
+  setTimeout(()=>startBossQ(index+1),2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// DIAGNOSTIC LOGIC
+// ═══════════════════════════════════════════════════════════
+function startDiagnostic(){
+  showHUD(false);
+  showScreen('diagnostic-intro');
+}
+
+function showDiagQ(index){
+  if(index>=25){showDiagResults();return;}
+  // Reset question state
+  const qd=questionData['dq'+index];
+  if(qd)qd.answered=false;
+  showScreen('diag-q'+index);
+}
+
+function diagNext(index,correct){
+  G.diagnosticAnswers[index]=correct;
+  setTimeout(()=>showDiagQ(index+1),1200);
+}
+
+function showDiagResults(){
+  const sections={
+    Fractions:{correct:0,total:5,color:'#ff69b4',season:'Season 1: Fraction Forest'},
+    Algebra:{correct:0,total:5,color:'#7ecfff',season:'Season 2: Algebra Arena + Season 5-6'},
+    Numbers:{correct:0,total:5,color:'#81c784',season:'Season 3: Kingdom of Numbers'},
+    Exponents:{correct:0,total:3,color:'#ffb74d',season:'Season 4: Tower of Exponents'},
+    Geometry:{correct:0,total:3,color:'#ce93d8',season:'Season 10: Geometry Galaxy'},
+    Advanced:{correct:0,total:4,color:'#4fc3f7',season:'Seasons 6-9: Word Problems, Stats, Probability'}
+  };
+  
+  const sectionMap=['Fractions','Fractions','Fractions','Fractions','Fractions',
+    'Algebra','Algebra','Algebra','Algebra','Algebra',
+    'Numbers','Numbers','Numbers','Numbers','Numbers',
+    'Exponents','Exponents','Exponents',
+    'Geometry','Geometry','Geometry',
+    'Advanced','Advanced','Advanced','Advanced'];
+  
+  G.diagnosticAnswers.forEach((correct,i)=>{
+    const sec=sectionMap[i];
+    if(correct)sections[sec].correct++;
+  });
+  
+  let totalCorrect=0,totalQ=25;
+  Object.values(sections).forEach(s=>totalCorrect+=s.correct);
+  const overall=Math.round(totalCorrect/totalQ*100);
+  
+  let html=`
+    <div class="text-center mb-20">
+      <div style="font-size:2rem;color:var(--gold);font-family:'Cinzel',serif;">${overall}% Ready</div>
+      <div class="progress-container mt-10">
+        <div class="progress-fill" style="width:${overall}%;background:${overall>=80?'var(--success)':overall>=60?'var(--warning)':'var(--error)'}"></div>
+      </div>
+    </div>
+    <hr class="pointed">
+    <h3 style="color:var(--gold);font-family:'Cinzel',serif;font-size:1rem;margin-bottom:15px;">Breakdown by Topic</h3>
+  `;
+  
+  const weakAreas=[];
+  const strongAreas=[];
+  
+  Object.entries(sections).forEach(([name,data])=>{
+    const pct=Math.round(data.correct/data.total*100);
+    let status,statusColor;
+    if(pct>=80){status='✅ Strong';statusColor='var(--success)';strongAreas.push(name);}
+    else if(pct>=60){status='🟡 Review';statusColor='var(--warning)';weakAreas.push(name);}
+    else{status='🔴 Study!';statusColor='var(--error)';weakAreas.push(name);}
+    
+    html+=`
+    <div class="result-bar">
+      <div class="result-label">${name}</div>
+      <div class="result-track">
+        <div class="result-fill" style="width:${pct}%;background:${data.color}"></div>
+      </div>
+      <div class="result-value" style="color:${statusColor}">${pct}%</div>
+    </div>
+    <div style="font-size:0.7rem;color:var(--text-secondary);text-align:right;margin-bottom:8px;">
+      → ${data.season}
+    </div>`;
+  });
+  
+  html+=`<hr class="pointed">`;
+  
+  // Study Plan
+  html+=`<h3 style="color:var(--gold);font-family:'Cinzel',serif;font-size:1rem;margin:15px 0;">Your Personalized Study Plan</h3>`;
+  
+  if(weakAreas.length===0){
+    html+=`<div class="feedback-text">🎉 <strong>Impressive!</strong> You're strong across the board. 
+    Focus on speed training and full-length practice tests.</div>`;
+  } else {
+    html+=`<div class="feedback-text">`;
+    weakAreas.forEach((area,i)=>{
+      const sec=sections[area];
+      html+=`<strong>${i===0?'🥇 Priority':'📌'} ${i+1}:</strong> ${area} — ${sec.season}<br>`;
+    });
+    html+=`<br>Start with your #1 priority. Play that Season's levels first, 
+    then review flashcards daily for 15 minutes.</div>`;
+  }
+  
+  if(strongAreas.length>0){
+    html+=`<div style="margin-top:10px;font-size:0.85rem;color:var(--success);">
+    <strong>Strengths to maintain:</strong> ${strongAreas.join(', ')} — quick weekly review is enough.</div>`;
+  }
+  
+  $('diag-results-content').innerHTML=html;
+  showScreen('diagnostic-results');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════════
+buildGame();
+showScreen('menu');
+
+// Keyboard shortcut: press 'D' for diagnostic at any time
+document.addEventListener('keydown',e=>{
+  if(e.key==='d'&&e.ctrlKey){startDiagnostic();}
+});
+</script>
+</body>
+</html>
